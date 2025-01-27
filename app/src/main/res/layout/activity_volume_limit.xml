@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <!-- Üst kısımda: Uygulama ikonu ve adı yan yana -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/app_icon_detail"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp"/>
+
+        <TextView
+            android:id="@+id/app_name_detail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+    </LinearLayout>
+
+    <!-- Merkezde: Max Ses Değeri girişi + Onayla Butonu -->
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <EditText
+            android:id="@+id/etMaxVolume"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Max Ses Düzeyi (örn: 80)"
+            android:inputType="number"
+            android:layout_marginBottom="16dp"
+            android:width="200dp"/>
+
+        <Button
+            android:id="@+id/btnOnayla"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Onayla"/>
+    </LinearLayout>
+
+    <!-- Alt kısım: Cihazın anlık Medya Ses Düzeyi -->
+    <TextView
+        android:id="@+id/txtDeviceMediaVolume"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Medya Ses Düzeyi: ?"
+        android:gravity="center"
+        android:padding="8dp"
+        android:textColor="#888888"/>
+
+</LinearLayout>

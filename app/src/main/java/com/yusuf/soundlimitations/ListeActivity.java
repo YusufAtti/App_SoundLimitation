@@ -1,9 +1,11 @@
 package com.yusuf.soundlimitations;
 
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.SearchView;
@@ -21,22 +23,23 @@ public class ListeActivity extends AppCompatActivity {
     private List<ApplicationInfo> allApps;
     private List<ApplicationInfo> filteredApps;
     private ProgressBar progressBar;
+    private ListView listView; // referansı dışarı da tutalım
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_liste); // yeni layout
+        setContentView(R.layout.activity_liste);
 
         // Arama, liste, progressBar bağlan
         SearchView searchView = findViewById(R.id.searchView);
-        ListView listView = findViewById(R.id.listView);
+        listView = findViewById(R.id.listView);
         progressBar = findViewById(R.id.progressBar);
 
         // Paket yöneticisi
         PackageManager packageManager = getPackageManager();
         allApps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA);
 
-        // Kullanıcı uygulamalarını filtrele
+        // Kullanıcı uygulamalarını filtrele (system flags yok)
         filteredApps = new ArrayList<>();
         for (ApplicationInfo appInfo : allApps) {
             if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 &&
@@ -64,34 +67,73 @@ public class ListeActivity extends AppCompatActivity {
             @Override
             public boolean onQueryTextChange(String newText) {
                 progressBar.setVisibility(View.VISIBLE);
+
+                // Arka planda filtreleyip sıralayacağız
                 new Thread(() -> {
-                    filterApps(newText);
+                    // 1) Geçici listede filtreleme+sıralama
+                    List<ApplicationInfo> tempList = filterAndSortApps(newText);
+
+                    // 2) UI thread'de asıl listeyi güncelle
                     runOnUiThread(() -> {
-                        progressBar.setVisibility(View.GONE);
+                        filteredApps.clear();
+                        filteredApps.addAll(tempList);
                         adapter.notifyDataSetChanged();
+                        progressBar.setVisibility(View.GONE);
                     });
                 }).start();
+
                 return true;
             }
         });
+
+        // ListView item tıklama olayı
+        listView.setOnItemClickListener((parent, view, position, id) -> {
+            // Tıklanan uygulamayı alalım
+            ApplicationInfo selectedApp = filteredApps.get(position);
+
+            // Yeni ekrana geç
+            Intent intent = new Intent(ListeActivity.this, VolumeLimitActivity.class);
+
+            // Bu uygulamanın paket adını ve adını (label) gönderelim
+            intent.putExtra("EXTRA_PACKAGE_NAME", selectedApp.packageName);
+            String label = getPackageManager()
+                    .getApplicationLabel(selectedApp)
+                    .toString();
+            intent.putExtra("EXTRA_APP_LABEL", label);
+
+            startActivity(intent);
+        });
     }
 
-    // Filtreleme
-    private void filterApps(String query) {
-        filteredApps.clear();
+    /**
+     * Kullanıcıdan alınan query ile filtreleme + sıralama.
+     * Bunu geçici bir listede yapıyoruz ki "ConcurrentModificationException" olmasın.
+     */
+    private List<ApplicationInfo> filterAndSortApps(String query) {
+        List<ApplicationInfo> tempList = new ArrayList<>();
+
         for (ApplicationInfo appInfo : allApps) {
             if ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0 &&
                     (appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) == 0) {
-                String appName = getPackageManager().getApplicationLabel(appInfo).toString().toLowerCase(Locale.getDefault());
+
+                String appName = getPackageManager()
+                        .getApplicationLabel(appInfo)
+                        .toString()
+                        .toLowerCase(Locale.getDefault());
+
                 if (appName.contains(query.toLowerCase(Locale.getDefault()))) {
-                    filteredApps.add(appInfo);
+                    tempList.add(appInfo);
                 }
             }
         }
-        sortApps(filteredApps);
+
+        // Şimdi tempList'i sıralıyoruz
+        sortApps(tempList);
+
+        return tempList;
     }
 
-    // Sıralama
+    // Mevcut bir listeyi A'dan Z'ye sıralar
     private void sortApps(List<ApplicationInfo> apps) {
         Collections.sort(apps, (app1, app2) -> {
             String name1 = getPackageManager().getApplicationLabel(app1).toString().toLowerCase(Locale.getDefault());
