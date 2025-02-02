@@ -1,3 +1,5 @@
+# I can't share the rest of this project due to confidentiality reasons, as I will soon be publishing the application on the Google Play Store
+
 Purpose and Functionality of the Project
 Sound Limitations is an Android application that helps users control media volume by setting volume limits for specific apps.
 
